@@ -1,0 +1,6 @@
+<launch>
+    <!-- Odom-IMU Extended Kalman Filter-->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization_odom" clear_params="true"> 
+        <rosparam command="load" file="$(find rtabmap_ros)/params/robot_localization_map.yaml" />
+    </node>
+</launch>

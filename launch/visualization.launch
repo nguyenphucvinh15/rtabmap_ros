@@ -1,0 +1,75 @@
+<launch>
+  <arg name="stereo"                    default="false"/>
+  <arg     if="$(arg stereo)" name="depth"  default="false"/>
+  <arg unless="$(arg stereo)" name="depth"  default="true"/>
+  <arg name="output"                  default="screen"/>        <!-- Control node output (screen or log) -->
+  <arg name="publish_tf_map"          default="true"/>
+  <arg name="clear_params"            default="true"/>
+  <arg name="rtabmapviz"              default="true" />
+  <arg name="args"                    default=""/>              <!-- delete_db_on_start, udebug -->
+  <arg name="rtabmap_args"            default="$(arg args)"/>   <!-- deprecated, use "args" argument -->
+<!-- Visual SLAM (robot side) -->
+    <!-- args: "delete_db_on_start" and "udebug" -->
+    <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" clear_params="$(arg clear_params)" output="$(arg output)" args="$(arg rtabmap_args)" >
+      <param     if="$(arg stereo)" name="subscribe_depth"  type="bool" value="false"/>
+      <param unless="$(arg stereo)" name="subscribe_depth"  type="bool" value="$(arg depth)"/>
+      <param name="subscribe_rgb"        type="bool"   value="$(arg subscribe_rgb)"/>
+      <param name="subscribe_rgbd"       type="bool"   value="$(eval subscribe_rgbd or use_odom_features)"/>
+      <param name="subscribe_stereo"     type="bool"   value="$(arg stereo)"/>
+      <param name="subscribe_scan"       type="bool"   value="$(arg subscribe_scan)"/>
+      <param name="subscribe_scan_cloud" type="bool"   value="$(arg subscribe_scan_cloud)"/>
+      <param name="subscribe_scan_descriptor" type="bool" value="$(arg subscribe_scan_descriptor)"/>
+      <param name="subscribe_user_data"  type="bool"   value="$(arg subscribe_user_data)"/>
+      <param if="$(arg visual_odometry)" name="subscribe_odom_info" type="bool" value="true"/>
+      <param if="$(arg icp_odometry)"    name="subscribe_odom_info" type="bool" value="true"/>
+      <param name="frame_id"             type="string" value="$(arg frame_id)"/>
+      <param name="map_frame_id"         type="string" value="$(arg map_frame_id)"/>
+      <param name="odom_frame_id"        type="string" value="$(arg odom_frame_id)"/>
+      <param name="odom_frame_id_init"   type="string" value="$(arg odom_frame_id_init)"/>
+      <param name="publish_tf"           type="bool"   value="$(arg publish_tf_map)"/>
+      <param name="gen_scan"             type="bool"   value="$(arg gen_scan)"/>
+      <param name="ground_truth_frame_id"       type="string" value="$(arg ground_truth_frame_id)"/>
+      <param name="ground_truth_base_frame_id"  type="string" value="$(arg ground_truth_base_frame_id)"/>
+      <param name="odom_tf_angular_variance" type="double" value="$(arg odom_tf_angular_variance)"/>
+      <param name="odom_tf_linear_variance"  type="double" value="$(arg odom_tf_linear_variance)"/>
+      <param name="odom_sensor_sync"         type="bool"   value="$(arg odom_sensor_sync)"/>
+      <param name="wait_for_transform_duration"  type="double"   value="$(arg wait_for_transform)"/>
+      <param name="database_path"        type="string" value="$(arg database_path)"/>
+      <param name="approx_sync"          type="bool"   value="$(eval approx_sync and not use_odom_features)"/>
+      <param name="config_path"          type="string" value="$(arg cfg)"/>
+      <param name="queue_size"           type="int" value="$(arg queue_size)"/>
+      <param if="$(eval not scan_cloud_filtered and not scan_cloud_assembling)" name="scan_cloud_max_points" type="int" value="$(arg scan_cloud_max_points)"/>
+      <param name="landmark_linear_variance"   type="double" value="$(arg tag_linear_variance)"/>
+      <param name="landmark_angular_variance"  type="double" value="$(arg tag_angular_variance)"/> 
+      <param name="gen_depth"                  type="bool"   value="$(arg gen_depth)" />
+      <param name="gen_depth_decimation"       type="int"    value="$(arg gen_depth_decimation)" />
+      <param name="gen_depth_fill_holes_size"  type="int"    value="$(arg gen_depth_fill_holes_size)" />
+      <param name="gen_depth_fill_iterations"  type="int"    value="$(arg gen_depth_fill_iterations)" />
+      <param name="gen_depth_fill_holes_error" type="double" value="$(arg gen_depth_fill_holes_error)" />
+      
+      <remap from="rgb/image"       to="$(arg rgb_topic_relay)"/>
+      <remap from="depth/image"     to="$(arg depth_topic_relay)"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info_topic)"/>
+      
+      <remap     if="$(arg use_odom_features)" from="rgbd_image" to="odom_rgbd_image"/>
+      <remap unless="$(arg use_odom_features)" from="rgbd_image" to="$(arg rgbd_topic_relay)"/>
+	
+      <remap from="left/image_rect"        to="$(arg left_image_topic_relay)"/>
+      <remap from="right/image_rect"       to="$(arg right_image_topic_relay)"/>
+      <remap from="left/camera_info"       to="$(arg left_camera_info_topic)"/>
+      <remap from="right/camera_info"      to="$(arg right_camera_info_topic)"/>
+      
+      <remap from="scan"                   to="$(arg scan_topic)"/>
+      <remap if="$(eval scan_cloud_assembling)" from="scan_cloud" to="assembled_cloud"/>
+      <remap if="$(eval scan_cloud_filtered and not scan_cloud_assembling)" from="scan_cloud" to="odom_filtered_input_scan"/>
+      <remap if="$(eval not scan_cloud_filtered and not scan_cloud_assembling)" from="scan_cloud" to="$(arg scan_cloud_topic)"/>
+      <remap from="scan_descriptor"        to="$(arg scan_descriptor_topic)"/>
+      <remap from="user_data"              to="$(arg user_data_topic)"/>
+      <remap from="user_data_async"        to="$(arg user_data_async_topic)"/>
+      <remap from="gps/fix"                to="$(arg gps_topic)"/>
+      <remap from="tag_detections"         to="$(arg tag_topic)"/>
+      <remap from="fiducial_transforms"    to="$(arg fiducial_topic)"/>
+      <remap from="odom"                   to="$(arg odom_topic)"/>
+      <remap from="imu"                    to="$(arg imu_topic)"/>
+      </node>
+</launch>
